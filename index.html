@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#56604c">
+  <meta name="description" content="玥鳴 2026 年 11 月與 12 月的皮下幫忙月曆">
+  <title>蚵仔打針排班月曆</title>
+  <style>
+    :root {
+      --paper: #eee8dc;
+      --paper-deep: #ded3c2;
+      --ink: #3d382f;
+      --muted: #5d574e;
+      --line: #b9aa94;
+      --olive: #56604c;
+      --olive-soft: #cbd0bd;
+      --clay: #804c38;
+      --white: #fbf8f1;
+      --radius: 32px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.72), transparent 27rem),
+        var(--paper-deep);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      padding-right: env(safe-area-inset-right);
+      padding-left: env(safe-area-inset-left);
+    }
+
+    button { font: inherit; }
+
+    .shell {
+      width: min(1040px, calc(100% - 32px));
+      margin: 28px auto;
+      padding: clamp(20px, 4vw, 48px);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(67, 55, 39, .12);
+    }
+
+    .masthead {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Noto Serif TC", "PMingLiU", serif;
+      font-size: clamp(2rem, 6vw, 4.6rem);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: .98;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: .9rem;
+      white-space: nowrap;
+    }
+
+    .legend::before {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--olive);
+      content: "";
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      margin-bottom: 20px;
+      background: rgba(185, 170, 148, .28);
+      border-radius: 22px;
+    }
+
+    .tab {
+      min-height: 52px;
+      padding: 10px 20px;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 17px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .tab[aria-selected="true"] {
+      color: var(--white);
+      background: var(--olive);
+      box-shadow: 0 7px 18px rgba(86, 96, 76, .24);
+    }
+
+    .tab:focus-visible { outline: 3px solid var(--clay); outline-offset: 3px; }
+
+    .month-panel[hidden] { display: none; }
+
+    .month-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 4px 4px 18px;
+    }
+
+    h2 { margin: 0; font: 700 clamp(1.5rem, 3vw, 2.3rem)/1 "Noto Serif TC", "PMingLiU", serif; }
+    .month-note { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .weekday {
+      padding: 6px 2px;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .day {
+      position: relative;
+      min-height: 132px;
+      padding: 12px;
+      overflow: hidden;
+      background: rgba(251, 248, 241, .55);
+      border: 1px solid rgba(185, 170, 148, .72);
+      border-radius: 18px;
+    }
+
+    .day.empty { background: transparent; border-style: dashed; opacity: .38; }
+    .day.no-help { background: rgba(222, 211, 194, .45); border-style: dashed; }
+    .day.no-help .shift { color: var(--muted); }
+    .date { font: 700 1rem/1 "Noto Serif TC", "PMingLiU", serif; }
+    .mobile-weekday { display: none; }
+
+    .day.work {
+      color: var(--white);
+      background: var(--olive);
+      border-color: var(--olive);
+    }
+
+    .shift {
+      display: block;
+      margin-top: 14px;
+      font-size: .74rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .day-meta { display: block; }
+
+    .helper-input {
+      width: 100%;
+      min-width: 0;
+      margin-top: 8px;
+      padding: 7px 8px;
+      color: var(--ink);
+      background: var(--white);
+      border: 0;
+      border-radius: 9px;
+      font-size: .72rem;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .helper-input::placeholder { color: #8d887e; font-weight: 600; }
+    .helper-input:focus { box-shadow: 0 0 0 3px #d9bf91; }
+
+    .save-note {
+      display: block;
+      margin-top: 4px;
+      color: var(--olive-soft);
+      font-size: .58rem;
+    }
+
+    .empty-state {
+      margin-top: 18px;
+      padding: 18px 22px;
+      color: var(--muted);
+      background: rgba(251, 248, 241, .55);
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+    }
+
+    .footer {
+      margin: 22px 4px 0;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    @media (max-width: 700px) {
+      body { padding-bottom: env(safe-area-inset-bottom); }
+      .shell { width: min(100% - 16px, 560px); margin: 8px auto; padding: 22px 14px 26px; }
+      .masthead { align-items: flex-start; flex-direction: column; gap: 12px; padding: 4px 4px 2px; margin-bottom: 20px; }
+      h1 { font-size: clamp(2.15rem, 12vw, 3.35rem); line-height: 1.05; }
+      .legend { font-size: .88rem; }
+      .tabs { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 5; margin-bottom: 24px; backdrop-filter: blur(12px); }
+      .tab { min-height: 48px; font-size: 1rem; }
+      .month-top { margin: 0 4px 16px; }
+      .calendar { grid-template-columns: 1fr; gap: 9px; }
+      .weekday, .day.empty { display: none; }
+      .day {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr);
+        grid-template-areas:
+          "date meta"
+          "input input";
+        gap: 10px 12px;
+        align-items: center;
+        min-height: 0;
+        padding: 13px;
+        border-radius: 16px;
+      }
+      .date { grid-area: date; align-self: start; font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+      .day-meta { grid-area: meta; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .mobile-weekday { display: inline; color: var(--muted); font-size: .88rem; font-weight: 800; }
+      .day.work .mobile-weekday { color: var(--olive-soft); }
+      .shift { margin: 0; font-size: .95rem; line-height: 1.2; }
+      .helper-input { grid-area: input; min-height: 46px; margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 16px; }
+      .save-note { display: none; }
+      .day.no-help { grid-template-areas: "date meta"; }
+      .day.no-help .day-meta { justify-content: space-between; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .month-panel:not([hidden]) { animation: settle .22s ease-out both; }
+      @keyframes settle { from { opacity: 0; transform: translateY(5px); } }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <h1>蚵仔打針<br>排班月曆</h1>
+      </div>
+      <div class="legend">綠色是上班日</div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="選擇月份">
+      <button class="tab" id="tab-nov" role="tab" aria-selected="true" aria-controls="panel-nov" data-month="nov">11 月</button>
+      <button class="tab" id="tab-dec" role="tab" aria-selected="false" aria-controls="panel-dec" data-month="dec" tabindex="-1">12 月</button>
+    </nav>
+
+    <section class="month-panel" id="panel-nov" role="tabpanel" aria-labelledby="tab-nov">
+      <div class="month-top"><h2>十一月</h2></div>
+      <div class="calendar" id="calendar-nov" aria-label="2026 年 11 月月曆"></div>
+    </section>
+
+    <section class="month-panel" id="panel-dec" role="tabpanel" aria-labelledby="tab-dec" hidden>
+      <div class="month-top"><h2>十二月</h2></div>
+      <div class="calendar" id="calendar-dec" aria-label="2026 年 12 月月曆"></div>
+    </section>
+
+    <p class="footer">點白色欄位填入可來幫忙的人；名字只會保存在目前這台裝置。</p>
+  </main>
+
+  <script>
+    const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+    const shifts = {
+      11: {
+        2: { time: '11:00–20:30' },
+        6: { time: '11:00–20:30' },
+        9: { time: '11:00–20:30' },
+        11: { time: '11:00–20:30' },
+        16: { time: '11:00–20:30' },
+        20: { time: '11:00–20:30' },
+        25: { time: '11:00–20:30' },
+        27: { time: '11:00–20:30' }
+      },
+      12: {}
+    };
+    const noHelpDates = {
+      11: new Set([17, 23, 24, 26]),
+      12: new Set()
+    };
+
+    function drawCalendar(targetId, year, month) {
+      const root = document.getElementById(targetId);
+      weekdays.forEach(label => {
+        const item = document.createElement('div');
+        item.className = 'weekday';
+        item.textContent = label;
+        root.append(item);
+      });
+
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const totalDays = new Date(year, month, 0).getDate();
+      for (let i = 0; i < firstDay; i++) {
+        const blank = document.createElement('div');
+        blank.className = 'day empty';
+        blank.setAttribute('aria-hidden', 'true');
+        root.append(blank);
+      }
+
+      for (let date = 1; date <= totalDays; date++) {
+        const shift = shifts[month][date];
+        const noHelp = noHelpDates[month].has(date);
+        const helpTime = shift ? '上午 9:00' : '晚上 9:30';
+        const cell = document.createElement('div');
+        cell.className = `day${shift ? ' work' : ''}${noHelp ? ' no-help' : ''}`;
+        const weekday = weekdays[new Date(year, month - 1, date).getDay()];
+        cell.innerHTML = `<span class="date">${date}</span>`;
+        if (noHelp) {
+          cell.innerHTML += `<div class="day-meta"><span class="mobile-weekday">${weekday}</span><span class="shift">不用安排</span></div>`;
+          cell.setAttribute('aria-label', `${month} 月 ${date} 日，不用安排`);
+          root.append(cell);
+          continue;
+        }
+        const storageKey = `helper-2026-${month}-${date}`;
+        const savedName = localStorage.getItem(storageKey) || '';
+        cell.innerHTML += `<div class="day-meta"><span class="mobile-weekday">${weekday}</span><span class="shift">${helpTime}</span></div><input class="helper-input" aria-label="${month} 月 ${date} 日可以來幫忙的人" placeholder="填誰來幫忙" value=""><span class="save-note">自動儲存</span>`;
+        const input = cell.querySelector('.helper-input');
+        input.value = savedName;
+        input.addEventListener('input', () => localStorage.setItem(storageKey, input.value.trim()));
+        cell.setAttribute('aria-label', `${month} 月 ${date} 日，${helpTime}需要有人幫忙打皮下`);
+        root.append(cell);
+      }
+    }
+
+    drawCalendar('calendar-nov', 2026, 11);
+    drawCalendar('calendar-dec', 2026, 12);
+
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function activateTab(tab, updateHash = true) {
+      tabs.forEach(item => {
+        const active = item === tab;
+        item.setAttribute('aria-selected', String(active));
+        item.tabIndex = active ? 0 : -1;
+        document.getElementById(item.getAttribute('aria-controls')).hidden = !active;
+      });
+      if (updateHash) history.replaceState(null, '', `#${tab.dataset.month}`);
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateTab(tab));
+      tab.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const step = event.key === 'ArrowRight' ? 1 : -1;
+        const next = tabs[(index + step + tabs.length) % tabs.length];
+        activateTab(next);
+        next.focus();
+      });
+    });
+
+    const initial = tabs.find(tab => `#${tab.dataset.month}` === location.hash);
+    if (initial) activateTab(initial, false);
+  </script>
+</body>
+</html>
